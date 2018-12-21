@@ -121,11 +121,7 @@
 			<div>获取页面标题的宽字节版本</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
-			<!---->
-			<h3 class="api-def"><a name="wkeResize"></a>void wkeResize(wkeWebView webView, int w, int h)</h3>
-			<div>重新设置页面的宽高。如果webView是带窗口模式的，会设置真窗口的宽高。</div>
-			<div class="api-params">参数：略</div>
-			<div class="sep-line"></div>
+			
 			<!---->
 			<h3 class="api-def"><a name="wkeGetWidth"></a>int wkeGetWidth(wkeWebView webView)</h3>
 			<div>获取页面宽度</div>
@@ -194,11 +190,6 @@
 			<!---->
 			<h3 class="api-def"><a name="wkeGetViewDC"></a>HDC wkeGetViewDC(wkeWebView webView)</h3>
 			<div>获取webview的DC</div>
-			<div class="api-params">参数：略</div>
-			<div class="sep-line"></div>
-			<!---->
-			<h3 class="api-def"><a name="wkeGetHostHWND"></a>HWND wkeGetHostHWND(wkeWebView webView)</h3>
-			<div>获取webveiw对应的窗口句柄。实现和wkeGetWindowHandle完全相同</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
 			<!---->
@@ -396,15 +387,22 @@
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
 			<!---->
-			<h3 class="api-def"><a name="wkeRunJS"></a>jsValue wkeRunJS(wkeWebView webView, const utf8* script)</h3>
+			<h3 class="api-def"><a name="wkeRunJS"></a>jsValue wkeRunJS(wkeWebView webView, const utf8* script, bool isInClosure)</h3>
 			<div>运行一段js。返回js的值jsValue。jsValue是个封装了内部v8各种类型的类，如果需要获取详细信息，有jsXXX相关接口可以调用。见下述。</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
 			<!---->
-			<h3 class="api-def"><a name="wkeRunJSW"></a>jsValue wkeRunJSW(wkeWebView webView, const wchar_t* script)</h3>
-			<div>同上。注意，此函数以及wkeRunJS，执行的js，也就是script，是在一个闭包中</div>
+			<h3 class="api-def"><a name="wkeRunJSW"></a>jsValue wkeRunJSW(wkeWebView webView, const wchar_t* script, bool isInClosure)</h3>
+			<div>同上。注意，此函数以及wkeRunJS，执行的js，也就是script</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
+			
+			<!---->
+			<h3 class="api-def"><a name="wkeRunJsInAllFrames"></a>void wkeRunJsInAllFrames(wkeWebView webView, const utf8* script, bool isInClosure)</h3>
+			<div>在所有的frame中执行一遍js</div>
+			<div class="api-params">参数：略</div>
+			<div class="sep-line"></div>
+			
 			<!---->
 			<h3 class="api-def"><a name="wkeGlobalExec"></a>jsExecState wkeGlobalExec(wkeWebView webView)</h3>
 			<div>获取页面主frame的jsExecState。jsExecState是什么，见下述。</div>
@@ -548,64 +546,66 @@
 			<div class="api-params">参数：typedef bool(*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const char *url, void *job)</div>
 			<div class="api-remark">注意：<br>
 				1，此回调功能强大，在回调里，如果对job设置了wkeNetHookRequest，则表示mb会缓存获取到的网络数据，并在这次网络请求
-				结束后调用wkeOnLoadUrlEnd设置的回调，同时传递缓存的数据。在此期间，mb不会处理网络数据。<br>
-				2，如果在wkeLoadUrlBeginCallback里没设置wkeNetHookRequest，则不会触发wkeOnLoadUrlEnd回调。<br>
-				3，如果wkeLoadUrlBeginCallback回调里返回true，表示mb不处理此网络请求（既不会发送网络请求）。返回false，表示mb依然会发送网络请求。<br>
+				结束后调用wkeOnNetHookRequest设置的回调，同时传递缓存的数据。在此期间，mb不会处理网络数据。<br>
+				2，如果wkeLoadUrlBeginCallback回调里返回true，表示mb不处理此网络请求（既不会发送网络请求）。返回false，表示mb依然会发送网络请求。<br>
 				用法举例：<br>
 				假如需要hook百度某个url（如httdiv://baidu.com/a.js）,替换为本地c:\b.js，则可以这样实现：<br>
-			<pre>	void readJsFile(const wchar_t* divath, std::vector<char>* buffer) {
-			    HANDLE hFile = CreateFileW(divath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-			    if (INVALID_HANDLE_VALUE == hFile) {
-			        DebugBreak();
-			        return;
-			    }
-			
-			    DWORD fileSizeHigh;
-			    const DWORD bufferSize = ::GetFileSize(hFile, &amp;amdiv;fileSizeHigh);
-			
-			    DWORD numberOfBytesRead = 0;
-			    buffer-&gt;resize(bufferSize);
-			    BOOL b = ::ReadFile(hFile, &amp;amdiv;buffer-&gt;at(0), bufferSize, &amp;amdiv;numberOfBytesRead, nulldivtr);
-			    ::CloseHandle(hFile);
-			
+			<pre>	
+	void readJsFile(const wchar_t* divath, std::vector&lt;char&gt;* buffer) {
+		HANDLE hFile = CreateFileW(divath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (INVALID_HANDLE_VALUE == hFile) {
+			DebugBreak();
+			return;
+		}
+	
+		DWORD fileSizeHigh;
+		const DWORD bufferSize = ::GetFileSize(hFile, &amp;fileSizeHigh);
+	
+		DWORD numberOfBytesRead = 0;
+		buffer-&gt;resize(bufferSize);
+		BOOL b = ::ReadFile(hFile, &amp;buffer-&gt;at(0), bufferSize, &amp;numberOfBytesRead, nulldivtr);
+		::CloseHandle(hFile);
+	
+	}
+	
+	static bool HookUrl(void* job, const char* url, const char* hookUrl, const wchar_t* localFile, const char* mime) {
+		if (0 != strstr(url, hookUrl)) {
+			wkeNetSetMIMETydive(job, (char*)mime); // "text/html" "text/javascridivt"
+			std::vector&lt;char&gt; buffer;
+				ReadJsFile(localFile, &amp;buffer);
+				wkeNetSetData(job, &amp;buffer[0], buffer.size());
+				return true;
 			}
-			
-			static bool HookUrl(void* job, const char* url, const char* hookUrl, const wchar_t* localFile, const char* mime) {
-			    if (0 != strstr(url, hookUrl)) {
-			        wkeNetSetMIMETydive(job, (char*)mime); // "text/html" "text/javascridivt"
-			        std::vector<char> buffer;
-				        ReadJsFile(localFile, &amp;amdiv;buffer);
-				        wkeNetSetData(job, &amp;amdiv;buffer[0], buffer.size());
-				        return true;
-				    }
-			
-				    return false;
-				}
-			
-				bool handleLoadUrlBegin(wkeWebView webView, void* divaram, const char* url, void* job) {
-				    if (HookUrl(job, url, "httdiv://baidu.com/a.js", L"c:\\b.js", "text/javascridivt"))
-				        return true;
-			
-				    return false;
-				}
-				如果需要拿到httdiv://baidu.com/a.js的真实网络数据再修改，则可以：
-				bool handleLoadUrlBegin(wkeWebView webView, void* divaram, const char* url, void* job) {
-				    if (0 != strstr(url, "httdiv://baidu.com/a.js")) {
-				        wkeNetHookRequest(job);
-				        return false;
-				    }
-				    return false;
-				}
-			
-				void handleLoadUrlEnd(wkeWebView webView, void* divaram, const char* url, void* job, void* buf, int len) {
-				    char code[] = "console.log('test')";
-				    wkeNetSetData(job, code, sizeof(code));
-				}
-			 </char></char></pre>
+	
+			return false;
+	}
+
+	bool handleLoadUrlBegin(wkeWebView webView, void* divaram, const char* url, void* job) {
+		if (HookUrl(job, url, "httdiv://baidu.com/a.js", L"c:\\b.js", "text/javascridivt"))
+			return true;
+
+		return false;
+	}
+	
+	
+	如果需要拿到httdiv://baidu.com/a.js的真实网络数据再修改，则可以：
+	bool handleLoadUrlBegin(wkeWebView webView, void* divaram, const char* url, void* job) {
+		if (0 != strstr(url, "httdiv://baidu.com/a.js")) {
+			wkeNetHookRequest(job);
+			return false;
+		}
+		return false;
+	}
+
+	void handleNetHookRequest(wkeWebView webView, void* divaram, const char* url, void* job, void* buf, int len) {
+		char code[] = "console.log('test')";
+		wkeNetSetData(job, code, sizeof(code));
+	}
+			 </pre>
 			</div>
 			<div class="sep-line"></div>
 			<!---->
-			<h3 class="api-def"><a name="wkeOnLoadUrlEnd"></a>void wkeOnLoadUrlEnd(wkeWebView webView, wkeLoadUrlEndCallback callback, void* callbackParam)</h3>
+			<h3 class="api-def"><a name="wkeOnNetHookRequest"></a>void wkeOnNetHookRequest(wkeWebView webView, wkeNetHookRequestCallback callback, void* callbackParam)</h3>
 			<div>见wkeOnLoadUrlBegin的描述</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
@@ -644,6 +644,11 @@
 			<!---->
 			<h3 class="api-def"><a name="wkeGetFrameUrl"></a>const utf8* wkeGetFrameUrl(wkeWebView webView, wkeWebFrameHandle frameId)</h3>
 			<div>获取frame对应的url</div>
+			<div class="api-params">参数：略</div>
+			<div class="sep-line"></div>
+			<!---->
+			<h3 class="api-def"><a name="wkeGetFrameHandleByUrl"></a>wkeWebFrameHandle wkeGetFrameHandleByUrl(wkeWebView webView, const utf8* url)</h3>
+			<div>获取url对应的frame</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
 			<!---->
@@ -716,7 +721,7 @@
 			<div class="sep-line"></div>
 			<!---->
 			<h3 class="api-def"><a name="wkeGetWindowHandle"></a>HWND wkeGetWindowHandle(wkeWebView webWindow)</h3>
-			<div>获取窗口对应的真实句柄。和wkeGetHostHWND的实现完全相同</div>
+			<div>获取窗口对应的真实句柄。</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
 			<!---->
@@ -754,6 +759,26 @@
 			<div>resize窗口，和wkeResize效果一样</div>
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
+			
+			<!---->
+			<h3 class="api-def"><a name="wkeCreateResizeBorders"></a>void wkeCreateResizeBorders(wkeWebView webWindow, bool bLeft, bool bTop, bool bRight, bool bBottom, bool bLeftTop, bool bLeftBottom, bool bRightTop, bool bRightBottom)</h3>
+			<div>为窗口创建Resize的透明边框</div>
+			<div class="api-params">参数：</div>
+			<table class="api-param">
+			    <tbody>
+					<tr><td>bLeft</td><td>左边是否可拉动</td></tr>
+					<tr><td>bTop</td><td>上边是否可拉动</td></tr>
+					<tr><td>bRight</td><td>右边是否可拉动</td></tr>
+					<tr><td>bBottom</td><td>下边是否可拉动</td></tr>
+					<tr><td>bLeftTop</td><td>左上角是否可拉动</td></tr>
+					<tr><td>bLeftBottom</td><td>左下角是否可拉动</td></tr>
+					<tr><td>bRightTop</td><td>右上角是否可拉动</td></tr>
+					<tr><td>bRightBottom</td><td>右下角是否可拉动</td></tr>
+				</tbody>
+			</table>
+			<div class="api-remark">注意：最好在透明的窗口中使用，即wkeCreateWebWindow使用WKE_WINDOW_TYPE_TRANSPARENT选项创建。</div>
+			<div class="sep-line"></div>
+			
 			<!---->
 			<h3 class="api-def"><a name="wkeSetWindowTitle"></a>void wkeSetWindowTitle(wkeWebView webWindow, const utf8* title)</h3>
 			<div>略</div>
@@ -1236,33 +1261,102 @@
 			<div class="api-remark">注意：此接口只能绑定主frame，并且特别需要注意的是，因为历史原因，此接口是fastcall调用约定！（但wkeJsBindFunction不是）<br>
 				另外此接口和wkeJsBindFunction必须在webview创建前调用<br>
 				使用示例：<br>
-			<pre>    c++里：
-			--------
-			jsValue JS_CALL onNativeFunction(jsExecState es) {
-			&nbsp;&nbsp;&nbsp;&nbsp;jsValue v = jsArg(es, 0);
-			&nbsp;&nbsp;&nbsp;&nbsp;const wchar_t* str = jsToTemdivStringW(es, v);
-			&nbsp;&nbsp;&nbsp;&nbsp;OutdivutdebugStringW(str);
-			}
-			jsBindFunction("testCall", onNativeFunction， 1);
-			
-			js里：
-			--------
-			window.testCall('testStrt');
+			<pre>
+	c++里：
+	--------
+	jsValue JS_CALL onNativeFunction(jsExecState es) {
+	&nbsp;&nbsp;&nbsp;&nbsp;jsValue v = jsArg(es, 0);
+	&nbsp;&nbsp;&nbsp;&nbsp;const wchar_t* str = jsToTemdivStringW(es, v);
+	&nbsp;&nbsp;&nbsp;&nbsp;OutdivutdebugStringW(str);
+	}
+	jsBindFunction("testCall", onNativeFunction， 1);
+	
+	js里：
+	--------
+	window.testCall('testStrt');
 			</pre>
 			</div>
 			<div class="sep-line"></div>
+			
 			<!---->
 			<h3 class="api-def"><a name="jsBindGetter"></a>void jsBindGetter(const char* name, jsNativeFunction fn)</h3>
 			<div>对js winows绑定一个属性访问器，在js里windows.XXX这种形式调用时，fn会被调用</div>
 			<div class="api-params">参数：略</div>
-			<div class="api-remark">示例：jsBindGetter("XXX")</div>
+			<div class="api-remark">注意：此接口必须在webview创建前调用<br>
+				使用示例：<br>
+			<pre>
+	c++里：
+	--------
+	static int s_myVal = 1988;
+	jsValue JS_CALL js_getMyVal(jsExecState es)
+	{
+		return jsInt(s_myVal);
+	}
+	jsValue JS_CALL js_setMyVal(jsExecState es)
+	{
+		s_myVal = jsToInt(es, jsArg(es, 0));
+
+		return jsUndefined();
+	}	
+	jsBindGetter("myVal", js_getMyVal);
+	jsBindSetter("myVal", js_setMyVal);
+	
+	js里：
+	--------
+	var n = myVal;//Getter
+	myVal = 1992;//Setter
+			</pre>
+			</div>
 			<div class="sep-line"></div>
+			
 			<!---->
 			<h3 class="api-def"><a name="jsBindSetter"></a>void jsBindSetter(const char* name, jsNativeFunction fn)</h3>
 			<div>对js winows绑定一个属性设置器。</div>
 			<div class="api-params">参数：略</div>
+			<div class="api-remark">参考jsBindGetter</div>
 			<div class="sep-line"></div>
 			<!---->
+			
+			<!---->
+			<h3 class="api-def"><a name="wkeJsBindGetter"></a>void wkeJsBindGetter(const char* name, wkeJsNativeFunction fn, void* param)</h3>
+			<div>同jsBindGetter，只是可以传递参数</div>
+			<div class="api-params">参数：略</div>
+			<div class="api-remark">注意：此接口必须在webview创建前调用<br>
+				使用示例：<br>
+			<pre>
+	c++里：
+	--------
+	static int s_myVal = 1988;
+	jsValue WKE_CALL_TYPE js_getMyVal(jsExecState es, void* param)
+	{
+		return jsInt(s_myVal);
+	}
+
+	jsValue WKE_CALL_TYPE js_setMyVal(jsExecState es, void* param)
+	{
+		s_myVal = jsToInt(es, jsArg(es, 0));
+
+		return jsUndefined();
+	}
+	wkeJsBindGetter("myVal", js_getMyVal, NULL);
+	wkeJsBindSetter("myVal", js_setMyVal, NULL);
+	
+	js里：
+	--------
+	var n = myVal;//Getter
+	myVal = 1992;//Setter
+			</pre>
+			</div>
+			<div class="sep-line"></div>
+			
+			<!---->
+			<h3 class="api-def"><a name="wkeJsBindSetter"></a>void wkeJsBindSetter(const char* name, wkeJsNativeFunction fn, void* param)</h3>
+			<div>同jsBindSetter，只是可以传递参数。</div>
+			<div class="api-params">参数：略</div>
+			<div class="api-remark">参考wkeJsBindGetter</div>
+			<div class="sep-line"></div>
+			<!---->
+			
 			<h3 class="api-def"><a name="wkeJsBindFunction"></a>void wkeJsBindFunction(const char* name, wkeJsNativeFunction fn, void* param, unsigned int argCount)</h3>
 			<div>和jsBindFunction功能类似，但更方便一点，可以传一个param做自定义数据。</div>
 			<div class="api-params">参数：略</div>
