@@ -1303,48 +1303,5 @@
 			<div class="api-params">参数：略</div>
 			<div class="sep-line"></div>
 		</div>
-		<div class="search">
-			<input type="text" name="" id="" value="" />
-			<ul class="search-result">
-			</ul>
-		</div>
-<script src="http://lib.sinaapp.com/js/jquery/1.10/jquery-1.10.0.min.js" type="text/javascript" charset="utf-8"></script>
-<script type="text/javascript">
-	function scrollSpeed(location){
-		var location = parseFloat(location,2);
-		$('html,body').animate({scrollTop: location.toString()+'px'}, 400);
-	}
-	function search(keywords){
-		console.log('start------------');
-		$('.search-result').empty();
-		var num = 1;
-		$('.api-def').each(function(){
-			if($(this).text().toLowerCase().indexOf(keywords.toLowerCase()) != -1){
-				$('.search-result').append('<li data-top="'+$(this).offset().top+'" title="'+$(this).text()+'">['+num.toString()+'] '+$(this).text()+'</li>');
-				if(num == 1){
-					scrollSpeed($(this).offset().top);					
-				}
-				num++;
-			}
-		});
-		console.log('end------------');
-	}
-	$(".search").bind("input propertychange",function(event){
-	    var keyword = $(this).children('input').val();
-	    search(keyword);
-	});
-	$(".search ul").on('click','li',function(){
-		scrollSpeed($(this).data('top'));	
-	});
-	document.onkeydown = function(e){
-		var keyCode = e.keyCode || e.which || e.charCode;
-		var ctrlKey = e.ctrlKey || e.metaKey;
-		if(ctrlKey && keyCode == 70) {
-			$('.search').fadeToggle('fast');
-			e.preventDefault();
-		}
-		return true;
-	}
-</script>
 	</body>
 </html>
